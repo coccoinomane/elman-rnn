@@ -1,0 +1,4 @@
+{
+    "black-formatter.importStrategy": "fromEnvironment",
+    "editor.formatOnSave": true
+}
