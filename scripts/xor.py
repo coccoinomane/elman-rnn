@@ -1,9 +1,29 @@
 """
 Elman's simple recurrent neural network (RNN) for the XOR problem.
 
-Differences from Elmans original paper:
-- Using ReLU activation function instead of sigmoid
-- Using cross-entropy loss instead of squared error to simplify the backpropagation
+The script generates a sequence of 3,000 bits where each third bit
+is the XOR of the previous two bits.  The network is then trained
+on this sequence, bit by bit, using a sigmoid activation and a context
+layer.  The predictions are then tested on a new sequence of 90 bits.
+
+usage: python xor.py
+
+The main difference with Elman's original paper is that I use 8 hidden units
+instead of 2.  While I also get convergence with 2 hidden neurons, it happens
+only with rare random initializations. 8 hidden neurons seem to be more stable.
+
+The parameters I use are:
+- 8 hidden units
+- learning rate of 0.2
+- 50 passes
+
+With these parameters, I achieve 90% accuracy on the training sequence and
+90% accuracy on the test sequence.  By accuracy here I mean the accuracy of
+predicting the XOR bit (the third bit in the triplet); the accuracy of the
+first two bits is always 50% because they are random.
+
+Play with parameters in the first lines of the script to see how they affect
+conversion and accuracy.
 """
 
 import numpy as np
@@ -15,11 +35,6 @@ import matplotlib.pyplot as plt
 # Hyperparameters
 # Please note that input and output layers both have only 1
 # unit (the current and next bit, respectively)
-# Elman correctly claims that 2 hidden neurons are enough to solve the XOR
-# problem.  While I also get convergence with 2 hidden neurons, it happens
-# only with rare random initializations. 8 hidden neurons seem to be more stable.
-# The following parameters (50, 8, 0.2) yield a 90% accuracy on the third bit
-# in about 5 seonds.
 n_passes = 50
 n_units_hidden = 8
 learning_rate = 0.2
