@@ -9,14 +9,15 @@ The model will be tested against a new sequence of 1,000 letters, and the accura
 printed to screen. With a random seed of 42, the model attains the following
 accuracy:
 
-- VOWELS accuracy: 98% (should tend to 100%)
+- VOWELS accuracy: 95% (should tend to 100%)
+- CONSONANTS accuracy: 31% (should tend to 33.3%)
 - CONSONANT COMING UP accuracy: 94% (should tend to 100%)
-- CONSONANTS accuracy: 30% (should tend to 33.3%)
 
 usage: python letters.py
 
 Play with parameters in the first lines of the script to see how they affect
-conversion and accuracy.
+conversion and accuracy.  You can also decide to encode the letters in one-hot
+encoding instead of the encoding defined in Elman's paper.
 """
 
 import numpy as np
@@ -56,7 +57,7 @@ SequenceEncoded = list[Matrix_6X1]
 # track of the timesteps and of the context units
 class ElmanRNN:
 
-    def __init__(self, n_hidden: int, one_hot: bool = False) -> None:
+    def __init__(self, n_hidden: int, one_hot: bool) -> None:
         # Assignments
         self.n_hidden = n_hidden
         self.one_hot = one_hot
@@ -142,16 +143,6 @@ class ElmanRNN:
         n_vowels = len(self.get_vowels_in_sequence(sequence))
         n_consonants = len(self.get_consonants_in_sequence(sequence))
         return n_vowels / n_sequence + n_consonants / n_sequence * 1 / 3
-
-    # @staticmethod
-    # def get_accuracy_by_position(predictions: Sequence, sequence: Sequence) -> list[float]:
-    #     """Get the accuracy of the model given predictions on the
-    #     entire training sequence, split by position in the triplet
-    #     (0,1,2).  We expect the prediction in the third position to
-    #     be more accurate than the first two, because it's the only
-    #     one that is predictable by the network."""
-    #     accuracy = predictions == sequence
-    #     return accuracy.reshape(-1, 3).mean(axis=0)
 
     @staticmethod
     def generate_letter_sequence(n_consonants: int) -> SequenceOfLetters:
@@ -318,7 +309,7 @@ for letter in training_sequence:
         break
 print("Sequence is correct")
 
-rnn = ElmanRNN(n_units_hidden)
+# Train the network
 rnn.train(training_sequence, learning_rate, n_passes)
 
 # Print table with predictions on new sequence
@@ -340,11 +331,11 @@ hits_vowels = 0
 n_consonants = 0
 hits_consonants = 0
 # 3. The network can predict when a consonant is coming next, because
-#    a consonants always follows the last vowel in a sequence of vowels
+#    a consonants always follows the last vowel in a sequence of vowels.
 #    This prediction is encoded in the first bit of the output vector,
 #    that is, the one bit that is turned on only for consonants (see
 #    `encode_letter` method).
-hits_consonant_after_vowel = 0
+hits_consonant_coming_up = 0
 # 4. As a corollary of the above, the change to get a consonant right
 #    is 1/3, because we always know when a consonant is coming up, but
 #    we don't know which one, and there are three consonants.
@@ -365,8 +356,11 @@ for i, input_letter in enumerate(test_sequence):
             hits_consonants += 1
         if input_letter not in ["a", "i", "u"]:
             raise ValueError("Error in sequence, consonant not following a vowel")
-        if A2[0] > 0.5:
-            hits_consonant_after_vowel += 1
+        if prediction in ["b", "d", "g"]:
+            # Fun fact: you get roughly the same result if you check the consonant bit:
+            # if A2[0] > 0.5:
+            # (but only if you are not using one-hot encoding)
+            hits_consonant_coming_up += 1
     # Vowels are predictable
     elif target_letter in ["a", "i", "u"]:
         case = "V"
@@ -386,5 +380,5 @@ print(
     f"CONSONANTS accuracy: {hits_consonants} out of {n_consonants} [{hits_consonants/n_consonants*100:.2f}% > SHOULD TEND TO 33.3%]"
 )
 print(
-    f"CONSONANTS AFTER VOWELS accuracy: {hits_consonant_after_vowel} out of {n_consonants} [{hits_consonant_after_vowel/n_consonants*100:.2f}% > SHOULD TEND TO 100%]"
+    f"CONSONANTS COMING UP accuracy: {hits_consonant_coming_up} out of {n_consonants} [{hits_consonant_coming_up/n_consonants*100:.2f}% > SHOULD TEND TO 100%]"
 )
